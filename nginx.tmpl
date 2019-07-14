@@ -328,6 +328,11 @@ server {
 	{{ end }}
 
 	location / {
+	        {{ if eq $sitepath "" }}
+		# nothing here
+		{{ else }}
+		rewrite ^/(.*)$ /VirtualHostBase/http/$host:80/{{ trim $sitepath}}/VirtualHostRoot/$1 break;
+		{{ end }}
 		{{ if eq $proto "uwsgi" }}
 		include uwsgi_params;
 		uwsgi_pass {{ trim $proto }}://{{ trim $upstream_name }};
