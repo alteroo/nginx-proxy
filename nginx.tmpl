@@ -157,6 +157,9 @@ upstream {{ $upstream_name }} {
 {{/* Get the VIRTUAL_PROTO defined by containers w/ the same vhost, falling back to "http" */}}
 {{ $proto := trim (or (first (groupByKeys $containers "Env.VIRTUAL_PROTO")) "http") }}
 
+{{/* Get the VIRTUAL_PLONE_PATH defined by containers w/ the same vhost, falling back to "" */}}
+{{ $sitepath := trim (or (first (groupByKeys $containers "Env.VIRTUAL_PLONE_PATH")) "") }}
+
 {{/* Get the NETWORK_ACCESS defined by containers w/ the same vhost, falling back to "external" */}}
 {{ $network_tag := or (first (groupByKeys $containers "Env.NETWORK_ACCESS")) "external" }}
 
@@ -273,6 +276,11 @@ server {
 	{{ end }}
 
 	location / {
+	        {{ if eq $sitepath "" }}
+		# nothing here
+		{{ else }}
+		rewrite ^/(.*)$ /VirtualHostBase/https/$host:443/{{ trim $sitepath}}/VirtualHostRoot/$1 break;
+		{{ end }}
 		{{ if eq $proto "uwsgi" }}
 		include uwsgi_params;
 		uwsgi_pass {{ trim $proto }}://{{ trim $upstream_name }};
